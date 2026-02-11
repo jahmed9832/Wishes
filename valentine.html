@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Be My Valentine?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff2e63;
+            --secondary: #ffccd5;
+            --bg: #0f0205;
+            --text: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg);
+            font-family: 'Poppins', sans-serif;
+            color: var(--text);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* --- UI Overlay --- */
+        .container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Space out content and buttons */
+            align-items: center;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .content-wrapper {
+            pointer-events: auto;
+            text-align: center;
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            margin: 0;
+            text-shadow: 0 0 20px var(--primary);
+            animation: float 3s ease-in-out infinite;
+            background: linear-gradient(to right, #fff, #ff2e63);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: clamp(0.8rem, 3vw, 1.1rem);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(255, 46, 99, 0.5);
+        }
+
+        /* --- Buttons --- */
+        .btn-group {
+            pointer-events: auto;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 10vh; /* Keeps buttons visible at bottom */
+            position: relative;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        background-color 0.3s, opacity 0.3s;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+
+        .btn-yes {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 46, 99, 0.4);
+            z-index: 20;
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        .btn-no {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            z-index: 19;
+        }
+
+        /* --- Success Animations --- */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, #000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+
+        .success-overlay h2 {
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(3rem, 10vw, 6rem);
+            color: white;
+            text-shadow: 0 0 30px var(--primary);
+            transform: scale(0.5);
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-align: center;
+        }
+
+        /* Heart Rain CSS */
+        .heart-rain {
+            position: absolute;
+            top: -10vh;
+            color: var(--primary);
+            animation: fall linear forwards;
+            z-index: 5;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .btn-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+            button {
+                width: 80%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="success-overlay" id="successScreen">
+        <h2>I Knew It! ❤️</h2>
+        <p>Best Decision Ever</p>
+    </div>
+
+    <div class="container" id="mainUI">
+        <div class="content-wrapper">
+            <h1>Be My Valentine?</h1>
+            <p>My Heart Beats For You</p>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-yes" id="yesBtn" onclick="acceptProposal()">Yes, I will!</button>
+            <button class="btn-no" id="noBtn">No</button>
+        </div>
+    </div>
+
+    <canvas id="scene"></canvas>
+
+    <script>
+        const canvas = document.getElementById('scene');
+        const ctx = canvas.getContext('2d');
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        
+        const PARTICLE_COUNT = 3000;
+        let heartScaleFactor = 16; 
+        let width, height;
+        let particles = [];
+        let isCelebrated = false;
+        let time = 0;
+        let yesScale = 1;
+
+        const phrases = [
+            "No", "Are you sure?", "Really?", "Think again!",
+            "Last chance!", "Don't break my heart", "Pls?", "I have snacks!",
+            "Look at the other button ->", "Error 404: No not found"
+        ];
+        let phraseIndex = 0;
+
+        window.onload = () => {
+            resize();
+            initParticles();
+            animate();
+        };
+
+        window.addEventListener('resize', () => {
+            resize();
+            // Re-init particles on desktop resize for better look, 
+            // but on mobile we usually don't to avoid glitching
+            if(window.innerWidth > 768) initParticles();
+        });
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // Adjust heart size based on screen width
+            heartScaleFactor = Math.min(width, height) * 0.025;
+            if(heartScaleFactor < 8) heartScaleFactor = 8;
+        }
+
+        const moveNoButton = () => {
+            if (isCelebrated) return;
+
+            yesScale += 0.15;
+            yesBtn.style.transform = `scale(${yesScale})`;
+
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            noBtn.innerText = phrases[phraseIndex];
+
+            // Calculate safe random area (within viewport)
+            const padding = 50;
+            const btnRect = noBtn.getBoundingClientRect();
+            
+            const maxX = width - btnRect.width - padding;
+            const maxY = height - btnRect.height - padding;
+            
+            const randomX = Math.random() * (maxX - padding) + padding;
+            const randomY = Math.random() * (maxY - padding) + padding;
+
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = '0';
+            noBtn.style.top = '0';
+            noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+            noBtn.style.opacity = Math.max(0.6, 1 - (phraseIndex * 0.05));
+        };
+
+        noBtn.addEventListener('mouseover', moveNoButton);
+        noBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveNoButton();
+        });
+
+        window.acceptProposal = function () {
+            if (isCelebrated) return;
+            isCelebrated = true;
+
+            document.getElementById('mainUI').style.opacity = '0';
+            document.getElementById('mainUI').style.pointerEvents = 'none';
+
+            const layer = document.getElementById('successScreen');
+            layer.style.opacity = '1';
+            layer.style.pointerEvents = 'auto';
+            layer.querySelector('h2').style.transform = 'scale(1)';
+
+            createHeartRain();
+
+            particles.forEach(p => {
+                p.friction = 0.96;
+                p.vx = (Math.random() - 0.5) * 20;
+                p.vy = (Math.random() - 0.5) * 20;
+                p.vz = (Math.random() - 0.5) * 20;
+            });
+        };
+
+        function createHeartRain() {
+            const container = document.body;
+            const heartChars = ['❤️', '💖', '💕', '💗'];
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.classList.add('heart-rain');
+                heart.innerText = heartChars[Math.floor(Math.random() * heartChars.length)];
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.fontSize = (Math.random() * 20 + 15) + 'px';
+                heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                container.appendChild(heart);
+                setTimeout(() => heart.remove(), 5000);
+            }, 150);
+        }
+
+        class Particle {
+            constructor() {
+                this.setHeartPos();
+                this.x = this.tx; this.y = this.ty; this.z = this.tz;
+                this.vx = 0; this.vy = 0; this.vz = 0;
+                this.size = Math.random() * 2 + 0.5;
+                this.friction = 0.92;
+                this.color = `hsl(${340 + Math.random() * 40}, 100%, ${60 + Math.random() * 20}%)`;
+            }
+
+            setHeartPos() {
+                let t = Math.random() * Math.PI * 2;
+                let u = Math.random();
+                let scale = Math.pow(u, 1/3) * heartScaleFactor; 
+
+                let x = 16 * Math.pow(Math.sin(t), 3);
+                let y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                let z = (Math.random() - 0.5) * 10;
+
+                this.tx = x * scale;
+                this.ty = y * scale;
+                this.tz = z * scale;
+            }
+
+            update(beat) {
+                if (isCelebrated) {
+                    this.x += this.vx; this.y += this.vy; this.z += this.vz;
+                    this.vx *= this.friction; this.vy *= this.friction; this.vz *= this.friction;
+                    this.size *= 0.98;
+                } else {
+                    let pulse = 1 + beat * 0.15;
+                    this.x += (this.tx * pulse - this.x) * 0.1;
+                    this.y += (this.ty * pulse - this.y) * 0.1;
+                    this.z += (this.tz * pulse - this.z) * 0.1;
+                }
+            }
+
+            draw(ctx, rx, ry) {
+                let y1 = this.y * Math.cos(rx) - this.z * Math.sin(rx);
+                let z1 = this.z * Math.cos(rx) + this.y * Math.sin(rx);
+                let x1 = this.x * Math.cos(ry) - z1 * Math.sin(ry);
+                let z2 = z1 * Math.cos(ry) + this.x * Math.sin(ry);
+
+                let perspective = 600;
+                let scale = perspective / (perspective + z2);
+                if (scale < 0) return;
+
+                let x2d = width / 2 + x1 * scale;
+                let y2d = height / 2 + y1 * scale;
+
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(x2d, y2d, this.size * scale, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+        }
+
+        let rotX = 0, rotY = 0;
+        let mouse = { x: 0, y: 0 };
+
+        document.addEventListener('mousemove', e => {
+            mouse.x = (e.clientX - width / 2) * 0.0005;
+            mouse.y = (e.clientY - height / 2) * 0.0005;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.fillStyle = 'rgba(15, 2, 5, 0.3)';
+            ctx.fillRect(0, 0, width, height);
+
+            time += 0.02;
+            let beat = Math.pow(Math.sin(time * 3), 60) * 0.5 + Math.sin(time * 3 + 0.5) * 0.1;
+
+            rotY += (mouse.x + 0.005 - rotY) * 0.05;
+            rotX += (mouse.y - rotX) * 0.05;
+
+            ctx.globalCompositeOperation = 'lighter';
+            particles.forEach(p => {
+                p.update(beat);
+                p.draw(ctx, rotX, rotY);
+            });
+            ctx.globalCompositeOperation = 'source-over';
+        }
+    </script>
+</body>
+</html>
